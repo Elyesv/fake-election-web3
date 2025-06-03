@@ -9,7 +9,8 @@ const props = defineProps<{
 }>();
 
 const labels = props.results.map((r) => r.candidate);
-const data = {
+
+const data = computed(() => ({
   labels,
   datasets: [
     {
@@ -27,7 +28,7 @@ const data = {
       borderWidth: 1,
     },
   ],
-};
+}));
 const options = {
   responsive: true,
   maintainAspectRatio: false,
