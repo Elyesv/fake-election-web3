@@ -15,11 +15,43 @@ contract Vote {
 
     event ElectionEnded(string[] candidates, uint[] results);
     event ElectionReset();
+    event ElectionRestarted();
 
     constructor(string[] memory _candidates) {
         admin = msg.sender;
         candidates = _candidates;
         isElectionActive = true;
+    }
+
+    modifier onlyAdmin() {
+        require(msg.sender == admin, "Only admin can call this function");
+        _;
+    }
+
+    function restartElection() public onlyAdmin {
+        require(!isElectionActive, "Election is already active");
+        
+        // Réinitialiser tous les états
+        for (uint i = 0; i < candidates.length; i++) {
+            votes[candidates[i]] = 0;
+        }
+
+        // Réinitialiser l'état des votants
+        for (uint i = 0; i < currentVoters.length; i++) {
+            registeredVoters[currentVoters[i]] = false;
+            hasVoted[currentVoters[i]] = false;
+        }
+
+        // Vider le tableau des votants actuels
+        delete currentVoters;
+
+        // Réinitialiser le compteur de votants
+        voterCount = 0;
+
+        // Réactiver l'élection
+        isElectionActive = true;
+
+        emit ElectionRestarted();
     }
 
     function registerVoter() public {
@@ -86,22 +118,19 @@ contract Vote {
     }
 
     function resetElection() internal {
-        // Réinitialiser les votes
         for (uint i = 0; i < candidates.length; i++) {
             votes[candidates[i]] = 0;
         }
 
-        // Réinitialiser l'état des votants
         for (uint i = 0; i < currentVoters.length; i++) {
             registeredVoters[currentVoters[i]] = false;
             hasVoted[currentVoters[i]] = false;
         }
 
-        // Vider le tableau des votants actuels
         delete currentVoters;
 
-        // Réinitialiser le compteur de votants
         voterCount = 0;
+        isElectionActive = true;
     }
 
     function getAllVotes() public view returns (string[] memory, uint[] memory) {
@@ -125,5 +154,29 @@ contract Vote {
             }
         }
         return false;
+    }
+
+    function getWinner() public view returns (string memory) {
+        require(!isElectionActive, "Election is still active");
+        
+        string memory winner = candidates[0];
+        uint maxVotes = votes[candidates[0]];
+        bool hasTie = false;
+
+        for (uint i = 1; i < candidates.length; i++) {
+            if (votes[candidates[i]] > maxVotes) {
+                winner = candidates[i];
+                maxVotes = votes[candidates[i]];
+                hasTie = false;
+            } else if (votes[candidates[i]] == maxVotes) {
+                hasTie = true;
+            }
+        }
+
+        if (hasTie) {
+            return "Tie";
+        }
+
+        return winner;
     }
 }
