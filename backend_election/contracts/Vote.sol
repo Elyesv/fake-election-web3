@@ -9,12 +9,9 @@ contract Vote {
     mapping(address => bool) public registeredVoters;
     mapping(address => bool) public hasVoted;
 
-    constructor() {
+    constructor(string[] memory _candidates) {
         admin = msg.sender;
-
-        candidates.push("Alice");
-        candidates.push("Bob");
-        candidates.push("John");
+        candidates = _candidates;
     }
 
     function registerVoter() public {
